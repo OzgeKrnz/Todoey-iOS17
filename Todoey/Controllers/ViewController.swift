@@ -7,13 +7,14 @@
 //
 
 import UIKit
+import CoreData
 
 class ViewController: UITableViewController{
     
     var itemArray = [Item]()
-    
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-  
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+
     
     
     override func viewDidLoad() {
@@ -41,7 +42,8 @@ class ViewController: UITableViewController{
             [weak self, weak ac] _ in
             guard let answer = ac?.textFields?[0].text else {return}
             
-            let answerItem = Item()
+            // creating data with CoreData
+            let answerItem = Item(context: self!.context)
             answerItem.title = answer
             answerItem.done = false
             self?.submit(answerItem)
@@ -52,13 +54,10 @@ class ViewController: UITableViewController{
     }
     
     func saveItems(){
-        let encoder = PropertyListEncoder()
         do{
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
-
+            try context.save()
         }catch{
-            print("Error encoding item aray, \(error)")
+            print("Error saving context \(error)")
         }
         tableView.reloadData()
     }
