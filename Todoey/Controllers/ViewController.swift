@@ -12,11 +12,17 @@ class ViewController: UITableViewController{
     
     var itemArray = [String]()
     
+    let defaults = UserDefaults.standard
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItem))
+        navigationItem.rightBarButtonItem?.tintColor = .gray
+        
+        if let items = defaults.array(forKey: "toDoListArray") as? [String]{
+            itemArray = items
+        }
     }
     
     @objc func addItem(){
@@ -37,9 +43,13 @@ class ViewController: UITableViewController{
         
     }
     
+    func saveItems(){
+        defaults.set(itemArray, forKey: "toDoListArray")
+        tableView.reloadData()
+    }
     func submit(_ item: String){
         itemArray.insert(item, at: itemArray.count )
-        tableView.reloadData()
+        saveItems()
     }
     
     //MARK- Tableview DataSource Method
@@ -48,6 +58,7 @@ class ViewController: UITableViewController{
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        //let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         cell.textLabel?.text = itemArray[indexPath.row]
         return cell
