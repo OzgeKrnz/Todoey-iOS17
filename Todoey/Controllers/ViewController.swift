@@ -10,7 +10,7 @@ import UIKit
 
 class ViewController: UITableViewController{
     
-    var itemArray = [String]()
+    var itemArray = [Item]()
     
     let defaults = UserDefaults.standard
     
@@ -20,9 +20,18 @@ class ViewController: UITableViewController{
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItem))
         navigationItem.rightBarButtonItem?.tintColor = .gray
         
-        if let items = defaults.array(forKey: "toDoListArray") as? [String]{
-            itemArray = items
-        }
+        /*if let items = defaults.array(forKey: "toDoListArray") as? [String]{
+         itemArray = items
+         }*/
+        //
+        
+        if let savedData = defaults.data(forKey: "toDoListArray") {
+            let decoder = JSONDecoder()
+            if let decodedItems = try? decoder.decode([Item].self, from: savedData) {
+                itemArray = decodedItems
+            }}
+ 
+        
     }
     
     @objc func addItem(){
@@ -36,19 +45,26 @@ class ViewController: UITableViewController{
         let submitItem = UIAlertAction(title: "Add Item", style: .default) {
             [weak self, weak ac] _ in
             guard let answer = ac?.textFields?[0].text else {return}
-            self?.submit(answer)
+            
+            let answerItem = Item()
+            answerItem.title = answer
+            answerItem.done = false
+            self?.submit(answerItem)
         }
         ac.addAction(submitItem)
         present(ac, animated: true)
         
     }
     
-    func saveItems(){
-        defaults.set(itemArray, forKey: "toDoListArray")
+    func saveItems() {
+        let itemsToSave = itemArray.map { ["title": $0.title, "done": $0.done] }
+        defaults.set(itemsToSave, forKey: "toDoListArray")
         tableView.reloadData()
     }
-    func submit(_ item: String){
-        itemArray.insert(item, at: itemArray.count )
+
+    func submit(_ item: Item){
+      
+        itemArray.insert(item, at: .zero)
         saveItems()
     }
     
@@ -60,7 +76,13 @@ class ViewController: UITableViewController{
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row]
+        cell.textLabel?.text = itemArray[indexPath.row].title
+        
+        if itemArray[indexPath.row].done == true{
+            cell.accessoryType = .checkmark
+        }else{
+            cell.accessoryType = .none
+        }
         return cell
     }
     
@@ -68,13 +90,12 @@ class ViewController: UITableViewController{
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //print(indexPath.row)
         
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-
+        if itemArray[indexPath.row].done == false{
+            itemArray[indexPath.row].done = true
         }else{
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-
+            itemArray[indexPath.row].done = false
         }
+        tableView.reloadData()
 
         tableView.deselectRow(at: indexPath, animated: true)
         
