@@ -12,10 +12,13 @@ class ViewController: UITableViewController{
     
     var itemArray = [Item]()
     
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+  
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+      
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItem))
         navigationItem.rightBarButtonItem?.tintColor = .gray
@@ -23,14 +26,6 @@ class ViewController: UITableViewController{
         /*if let items = defaults.array(forKey: "toDoListArray") as? [String]{
          itemArray = items
          }*/
-        //
-        
-        if let savedData = defaults.data(forKey: "toDoListArray") {
-            let decoder = JSONDecoder()
-            if let decodedItems = try? decoder.decode([Item].self, from: savedData) {
-                itemArray = decodedItems
-            }}
- 
         
     }
     
@@ -56,12 +51,18 @@ class ViewController: UITableViewController{
         
     }
     
-    func saveItems() {
-        let itemsToSave = itemArray.map { ["title": $0.title, "done": $0.done] }
-        defaults.set(itemsToSave, forKey: "toDoListArray")
+    func saveItems(){
+        let encoder = PropertyListEncoder()
+        do{
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+
+        }catch{
+            print("Error encoding item aray, \(error)")
+        }
         tableView.reloadData()
     }
-
+    
     func submit(_ item: Item){
       
         itemArray.insert(item, at: .zero)
@@ -78,11 +79,13 @@ class ViewController: UITableViewController{
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         cell.textLabel?.text = itemArray[indexPath.row].title
         
-        if itemArray[indexPath.row].done == true{
+        
+        cell.accessoryType = itemArray[indexPath.row].done ? .checkmark : .none
+       /* if itemArray[indexPath.row].done == true{
             cell.accessoryType = .checkmark
         }else{
             cell.accessoryType = .none
-        }
+        }*/
         return cell
     }
     
@@ -91,12 +94,13 @@ class ViewController: UITableViewController{
         //print(indexPath.row)
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        tableView.reloadData()
-
+        saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
         
         
     }
+    
+    
     
     
 
