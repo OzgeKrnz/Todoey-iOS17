@@ -90,11 +90,7 @@ class ViewController: UITableViewController{
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //print(indexPath.row)
         
-        if itemArray[indexPath.row].done == false{
-            itemArray[indexPath.row].done = true
-        }else{
-            itemArray[indexPath.row].done = false
-        }
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         tableView.reloadData()
 
         tableView.deselectRow(at: indexPath, animated: true)
