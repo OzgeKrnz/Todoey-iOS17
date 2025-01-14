@@ -12,7 +12,7 @@ import CoreData
 class ViewController: UITableViewController{
     
     var itemArray = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     
@@ -24,9 +24,9 @@ class ViewController: UITableViewController{
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItem))
         navigationItem.rightBarButtonItem?.tintColor = .gray
         
-        /*if let items = defaults.array(forKey: "toDoListArray") as? [String]{
-         itemArray = items
-         }*/
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        
+        loadItems()
         
     }
     
@@ -53,15 +53,27 @@ class ViewController: UITableViewController{
         
     }
     
+    //read data from core data(read in crud)
+    func loadItems(){
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do{
+            itemArray = try context.fetch(request)
+        }catch{
+            print("Error fetching data, \(error)")
+        }
+    
+        
+    }
+    
     func saveItems(){
         do{
             try context.save()
         }catch{
             print("Error saving context \(error)")
         }
-        tableView.reloadData()
+        self.tableView.reloadData()
     }
-    
+       
     func submit(_ item: Item){
       
         itemArray.insert(item, at: .zero)
@@ -92,17 +104,19 @@ class ViewController: UITableViewController{
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //print(indexPath.row)
         
+        //delete in crud: removing data
+        //context.delete(itemArray[indexPath.row])
+        
+        //removing current item from the itemArray
+        //itemArray.remove(at: indexPath.row)
+        
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+      
+        
+        //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
-        
-        
     }
-    
-    
-    
-    
-
 
 }
 
