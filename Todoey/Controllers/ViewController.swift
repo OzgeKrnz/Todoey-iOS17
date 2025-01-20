@@ -9,9 +9,13 @@
 import UIKit
 import CoreData
 
-class ViewController: UITableViewController{
+class ViewController: UITableViewController, UISearchBarDelegate{
     
     var itemArray = [Item]()
+    var filteredItemArray = [Item]()
+    
+    //search bar
+    let searchBar = UISearchBar()
 
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
@@ -19,7 +23,18 @@ class ViewController: UITableViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+
+        //UISearchBar ayarları
+        searchBar.delegate = self
+        searchBar.placeholder = "Search an item"
+        searchBar.sizeToFit()
+        tableView.tableHeaderView = searchBar
+        view.addSubview(searchBar)
       
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ToDoItemCell")
+
+        
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItem))
         navigationItem.rightBarButtonItem?.tintColor = .gray
@@ -27,6 +42,19 @@ class ViewController: UITableViewController{
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         loadItems()
+        filteredItemArray = itemArray
+
+        
+        
+
+        
+        
+        // searchbar Auto layout
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        ])
         
     }
     
@@ -55,12 +83,14 @@ class ViewController: UITableViewController{
     
     //read data from core data(read in crud)
     func loadItems(){
+        
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         do{
             itemArray = try context.fetch(request)
         }catch{
             print("Error fetching data, \(error)")
         }
+        filteredItemArray = itemArray
     
         
     }
@@ -77,21 +107,22 @@ class ViewController: UITableViewController{
     func submit(_ item: Item){
       
         itemArray.insert(item, at: .zero)
+        filteredItemArray = itemArray
         saveItems()
     }
     
     //MARK- Tableview DataSource Method
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return filteredItemArray.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row].title
+        cell.textLabel?.text = filteredItemArray[indexPath.row].title
         
         
-        cell.accessoryType = itemArray[indexPath.row].done ? .checkmark : .none
+        cell.accessoryType = filteredItemArray[indexPath.row].done ? .checkmark : .none
        /* if itemArray[indexPath.row].done == true{
             cell.accessoryType = .checkmark
         }else{
@@ -110,13 +141,29 @@ class ViewController: UITableViewController{
         //removing current item from the itemArray
         //itemArray.remove(at: indexPath.row)
         
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        filteredItemArray[indexPath.row].done = !filteredItemArray[indexPath.row].done
       
         
         //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    //MARK - UISearchBar Delegate
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+          filteredItemArray = itemArray.filter {
+            if let title = $0.title{
+                return title.lowercased().contains(searchText.lowercased())
+            }
+            return false
+        }
+    }
+    
+    func searchBarBookmarkButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        filteredItemArray = itemArray
+        tableView.reloadData()
+        searchBar.resignFirstResponder()
+    }
 
 }
-
